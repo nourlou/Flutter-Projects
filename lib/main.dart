@@ -67,7 +67,6 @@ class HomePageState extends State<HomePage> {
               ),
             ),
 
-            // Bouton de navigation
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor:
