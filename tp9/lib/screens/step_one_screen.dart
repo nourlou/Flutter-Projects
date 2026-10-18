@@ -1,5 +1,5 @@
-
 import 'package:flutter/material.dart';
+
 import '../models/user_profile.dart';
 import '../utils/validators.dart';
 import 'step_two_screen.dart';
@@ -13,62 +13,44 @@ class StepOneScreen extends StatefulWidget {
 
 class _StepOneScreenState extends State<StepOneScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _confirmationKey = GlobalKey<FormFieldState<String>>();
+  final _confirmKey = GlobalKey<FormFieldState<String>>();
 
-  final _nom = TextEditingController();
-  final _prenom = TextEditingController();
-  final _email = TextEditingController();
-  final _password = TextEditingController();
-  final _confirmation = TextEditingController();
+  final _nomCtrl = TextEditingController();
+  final _prenomCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+  final _confirmCtrl = TextEditingController();
 
-  bool _showPassword = false;
-  bool _showConfirmation = false;
+  bool _masquerMdp = true;
+  bool _masquerConfirm = true;
 
   @override
   void dispose() {
-    _nom.dispose();
-    _prenom.dispose();
-    _email.dispose();
-    _password.dispose();
-    _confirmation.dispose();
+    _nomCtrl.dispose();
+    _prenomCtrl.dispose();
+    _emailCtrl.dispose();
+    _passwordCtrl.dispose();
+    _confirmCtrl.dispose();
     super.dispose();
   }
 
-  Widget _field({
-    required String label,
-    required IconData icon,
-    required TextEditingController controller,
-    required String? Function(String?) validator,
-    Widget? suffix,
-    bool obscure = false,
-    TextInputType? keyboard,
-    Key? fieldKey,
-    void Function(String)? onChanged,
-  }) {
-    return TextFormField(
-      key: fieldKey,
-      controller: controller,
-      obscureText: obscure,
-      keyboardType: keyboard,
-      textInputAction: TextInputAction.next,
-      validator: validator,
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-        suffixIcon: suffix,
-      ),
-    );
-  }
+  void _suivant() {
+    FocusScope.of(context).unfocus();
 
-  void _next() {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez corriger les champs en rouge'),
+        ),
+      );
+      return;
+    }
 
     final profil = UserProfile(
-      nom: _nom.text.trim(),
-      prenom: _prenom.text.trim(),
-      email: _email.text.trim(),
-      password: _password.text,
+      nom: _nomCtrl.text.trim(),
+      prenom: _prenomCtrl.text.trim(),
+      email: _emailCtrl.text.trim(),
+      password: _passwordCtrl.text,
     );
 
     Navigator.push(
@@ -83,119 +65,129 @@ class _StepOneScreenState extends State<StepOneScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'Inscription – Étape 1/3',
-          style: TextStyle(fontSize: 20),
-        ),
+        title: const Text('Inscription – Étape 1/3'),
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(4),
-          child: LinearProgressIndicator(
-            value: 1 / 3,
-            minHeight: 4,
-            backgroundColor: Color(0xFFE3EDF0),
-            color: Color(0xFF00A8CC),
-          ),
+          child: LinearProgressIndicator(value: 1 / 3),
         ),
       ),
-      body: Form(
-        key: _formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            const Text(
-              'Informations personnelles',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            _field(
-              label: 'Nom',
-              icon: Icons.person_outline,
-              controller: _nom,
-              validator: Validators.nom,
-            ),
-            const SizedBox(height: 16),
-
-            _field(
-              label: 'Prénom',
-              icon: Icons.person_outline,
-              controller: _prenom,
-              validator: Validators.prenom,
-            ),
-            const SizedBox(height: 16),
-
-            _field(
-              label: 'E-mail',
-              icon: Icons.email_outlined,
-              controller: _email,
-              keyboard: TextInputType.emailAddress,
-              validator: Validators.email,
-            ),
-            const SizedBox(height: 16),
-
-            _field(
-              label: 'Mot de passe',
-              icon: Icons.lock_outline,
-              controller: _password,
-              obscure: !_showPassword,
-              validator: Validators.password,
-              suffix: IconButton(
-                icon: Icon(
-                  _showPassword
-                      ? Icons.visibility_off
-                      : Icons.visibility,
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              TextFormField(
+                controller: _nomCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Nom',
+                  prefixIcon: Icon(Icons.person_outline),
                 ),
-                onPressed: () {
-                  setState(() => _showPassword = !_showPassword);
+                textCapitalization: TextCapitalization.characters,
+                textInputAction: TextInputAction.next,
+                validator: (v) =>
+                    Validators.nom(v, champ: 'Le nom'),
+              ),
+              const SizedBox(height: 16),
+
+              TextFormField(
+                controller: _prenomCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Prénom',
+                  prefixIcon: Icon(Icons.badge_outlined),
+                ),
+                textCapitalization: TextCapitalization.words,
+                textInputAction: TextInputAction.next,
+                validator: (v) =>
+                    Validators.nom(v, champ: 'Le prénom'),
+              ),
+              const SizedBox(height: 16),
+
+              TextFormField(
+                controller: _emailCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'E-mail',
+                  hintText: 'nom@domaine.com',
+                  prefixIcon: Icon(Icons.email_outlined),
+                ),
+                keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
+                textInputAction: TextInputAction.next,
+                validator: Validators.email,
+              ),
+              const SizedBox(height: 16),
+
+              TextFormField(
+                controller: _passwordCtrl,
+                obscureText: _masquerMdp,
+                decoration: InputDecoration(
+                  labelText: 'Mot de passe',
+                  helperText:
+                      '8 caractères min., 1 majuscule, 1 chiffre',
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    tooltip: _masquerMdp ? 'Afficher' : 'Masquer',
+                    icon: Icon(
+                      _masquerMdp
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _masquerMdp = !_masquerMdp;
+                      });
+                    },
+                  ),
+                ),
+                textInputAction: TextInputAction.next,
+                validator: Validators.motDePasse,
+                onChanged: (_) {
+                  if (_confirmCtrl.text.isNotEmpty) {
+                    _confirmKey.currentState?.validate();
+                  }
                 },
               ),
-              onChanged: (_) {
-                _confirmationKey.currentState?.validate();
-              },
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            _field(
-              label: 'Confirmation du mot de passe',
-              icon: Icons.lock_outline,
-              controller: _confirmation,
-              obscure: !_showConfirmation,
-              fieldKey: _confirmationKey,
-              validator: (value) =>
-                  Validators.confirmation(value, _password.text),
-              suffix: IconButton(
-                icon: Icon(
-                  _showConfirmation
-                      ? Icons.visibility_off
-                      : Icons.visibility,
+              TextFormField(
+                key: _confirmKey,
+                controller: _confirmCtrl,
+                obscureText: _masquerConfirm,
+                decoration: InputDecoration(
+                  labelText: 'Confirmer le mot de passe',
+                  prefixIcon: const Icon(Icons.lock_reset),
+                  suffixIcon: IconButton(
+                    tooltip:
+                        _masquerConfirm ? 'Afficher' : 'Masquer',
+                    icon: Icon(
+                      _masquerConfirm
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _masquerConfirm = !_masquerConfirm;
+                      });
+                    },
+                  ),
                 ),
-                onPressed: () {
-                  setState(() {
-                    _showConfirmation = !_showConfirmation;
-                  });
-                },
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _suivant(),
+                validator: (v) => Validators.confirmation(
+                  v,
+                  _passwordCtrl.text,
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            SizedBox(
-              height: 48,
-              child: FilledButton(
-                onPressed: _next,
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF00A8CC),
-                  foregroundColor: Colors.white,
-                  shape: const StadiumBorder(),
-                ),
-                child: const Text('Suivant'),
+              FilledButton.icon(
+                onPressed: _suivant,
+                icon: const Icon(Icons.arrow_forward),
+                label: const Text('Suivant'),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

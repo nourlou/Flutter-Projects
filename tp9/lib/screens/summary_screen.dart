@@ -1,12 +1,15 @@
-
 import 'package:flutter/material.dart';
+
 import '../models/user_profile.dart';
 import 'step_one_screen.dart';
 
 class SummaryScreen extends StatefulWidget {
   final UserProfile profil;
 
-  const SummaryScreen({super.key, required this.profil});
+  const SummaryScreen({
+    super.key,
+    required this.profil,
+  });
 
   @override
   State<SummaryScreen> createState() => _SummaryScreenState();
@@ -14,54 +17,47 @@ class SummaryScreen extends StatefulWidget {
 
 class _SummaryScreenState extends State<SummaryScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _conditionsKey = GlobalKey<FormFieldState<bool>>();
+
   bool _conditionsAcceptees = false;
 
-  Widget _infoCard(String titre, List<Widget> lignes) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              titre,
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const Divider(),
-            ...lignes,
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _ligne(String label, String valeur, IconData icon) {
+  Widget _ligne(
+    IconData icone,
+    String titre,
+    String valeur,
+  ) {
     return ListTile(
+      leading: Icon(
+        icone,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      title: Text(titre),
+      subtitle: Text(
+        valeur.isEmpty ? 'Non renseigné' : valeur,
+      ),
       contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: const Color(0xFF00A8CC)),
-      title: Text(label),
-      subtitle: Text(valeur.isEmpty ? 'Non renseigné' : valeur),
     );
   }
 
   Future<void> _reinitialiser() async {
     final confirmer = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Réinitialiser'),
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Réinitialiser le formulaire ?'),
         content: const Text(
-          'Voulez-vous vraiment effacer le profil et recommencer ?',
+          'Toutes les informations saisies seront effacées.',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () {
+              Navigator.pop(dialogContext, false);
+            },
             child: const Text('Annuler'),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () {
+              Navigator.pop(dialogContext, true);
+            },
             child: const Text('Réinitialiser'),
           ),
         ],
@@ -80,7 +76,9 @@ class _SummaryScreenState extends State<SummaryScreen> {
   }
 
   Future<void> _confirmer() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
     await showDialog<void>(
       context: context,
@@ -88,36 +86,37 @@ class _SummaryScreenState extends State<SummaryScreen> {
       builder: (dialogContext) => AlertDialog(
         icon: const Icon(
           Icons.check_circle,
-          color: Color(0xFF00A8CC),
-          size: 56,
+          color: Colors.green,
+          size: 48,
         ),
         title: const Text('Inscription réussie !'),
-        content: const Text(
-          'Votre profil a été validé avec succès.',
+        content: Text(
+          'Bienvenue ${widget.profil.prenom} ! '
+          'Votre profil a été créé.',
         ),
         actions: [
           FilledButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              Navigator.pop(dialogContext);
+
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const StepOneScreen(),
+                ),
+                (route) => false,
+              );
+            },
             child: const Text('Terminer'),
           ),
         ],
       ),
     );
-
-    if (!mounted) return;
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const StepOneScreen(),
-      ),
-      (route) => false,
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final p = widget.profil;
+    final profil = widget.profil;
 
     return Scaffold(
       appBar: AppBar(
@@ -130,94 +129,149 @@ class _SummaryScreenState extends State<SummaryScreen> {
           ),
         ],
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _infoCard('Identité', [
-              _ligne('Nom', p.nom, Icons.person_outline),
-              _ligne('Prénom', p.prenom, Icons.person_outline),
-              _ligne('E-mail', p.email, Icons.email_outlined),
-              _ligne(
-                'Mot de passe',
-                '••••••••',
-                Icons.lock_outline,
-              ),
-            ]),
-            const SizedBox(height: 12),
-
-            _infoCard('Profil professionnel', [
-              _ligne('Profession', p.profession, Icons.work_outline),
-              _ligne(
-                "Années d'expérience",
-                p.experience?.toString() ?? '',
-                Icons.calendar_month_outlined,
-              ),
-              _ligne(
-                'TJM',
-                p.tjm == null ? '' : '${p.tjm} €',
-                Icons.euro,
-              ),
-              _ligne(
-                'Biographie',
-                p.biographie,
-                Icons.description_outlined,
-              ),
-            ]),
-            const SizedBox(height: 12),
-
-            FormField<bool>(
-              initialValue: false,
-              validator: (value) {
-                if (value != true) {
-                  return "Vous devez accepter les conditions d'utilisation";
-                }
-                return null;
-              },
-              builder: (state) => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    value: state.value ?? false,
-                    title: const Text(
-                      "J'accepte les conditions d'utilisation",
-                    ),
-                    onChanged: (value) {
-                      state.didChange(value ?? false);
-                    },
-                  ),
-                  if (state.hasError)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 12),
-                      child: Text(
-                        state.errorText!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                          fontSize: 12,
-                        ),
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              // Carte Identité
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Identité',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge,
                       ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            SizedBox(
-              height: 48,
-              child: FilledButton(
-                onPressed: _confirmer,
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF00A8CC),
-                  foregroundColor: Colors.white,
-                  shape: const StadiumBorder(),
+                      const SizedBox(height: 8),
+                      _ligne(
+                        Icons.person_outline,
+                        'Nom complet',
+                        profil.nomComplet,
+                      ),
+                      _ligne(
+                        Icons.email_outlined,
+                        'E-mail',
+                        profil.email,
+                      ),
+                      _ligne(
+                        Icons.lock_outline,
+                        'Mot de passe',
+                        '••••••••',
+                      ),
+                    ],
+                  ),
                 ),
-                child: const Text('Confirmer et créer le compte'),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 16),
+
+              // Carte Profil professionnel
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Profil professionnel',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      _ligne(
+                        Icons.work_outline,
+                        'Profession',
+                        profil.profession,
+                      ),
+                      _ligne(
+                        Icons.timeline,
+                        "Années d'expérience",
+                        '${profil.experience} an(s)',
+                      ),
+                      _ligne(
+                        Icons.euro,
+                        'TJM',
+                        '${profil.tjm.toStringAsFixed(2)} €',
+                      ),
+                      _ligne(
+                        Icons.description_outlined,
+                        'Biographie',
+                        profil.biographie,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Acceptation obligatoire des conditions
+              FormField<bool>(
+                key: _conditionsKey,
+                initialValue: false,
+                validator: (value) {
+                  if (value != true) {
+                    return "Vous devez accepter les conditions "
+                        "d’utilisation";
+                  }
+                  return null;
+                },
+                builder: (state) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity:
+                            ListTileControlAffinity.leading,
+                        value: _conditionsAcceptees,
+                        title: const Text(
+                          "J'accepte les conditions d'utilisation",
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _conditionsAcceptees = value ?? false;
+                          });
+
+                          state.didChange(value);
+                        },
+                      ),
+                      if (state.errorText != null)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 12),
+                          child: Text(
+                            state.errorText!,
+                            style: TextStyle(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .error,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+
+              const SizedBox(height: 24),
+
+              FilledButton.icon(
+                onPressed: _confirmer,
+                icon: const Icon(Icons.check),
+                label: const Text(
+                  'Confirmer et créer le compte',
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -1,12 +1,11 @@
-
 class UserProfile {
   final String nom;
   final String prenom;
   final String email;
   final String password;
   final String profession;
-  final int? experience;
-  final double? tjm;
+  final int experience;
+  final double tjm;
   final String biographie;
 
   const UserProfile({
@@ -15,8 +14,8 @@ class UserProfile {
     this.email = '',
     this.password = '',
     this.profession = '',
-    this.experience,
-    this.tjm,
+    this.experience = 0,
+    this.tjm = 0.0,
     this.biographie = '',
   });
 
@@ -41,4 +40,11 @@ class UserProfile {
       biographie: biographie ?? this.biographie,
     );
   }
+
+  String get nomComplet => '$prenom ${nom.toUpperCase()}';
+
+  @override
+  String toString() =>
+      'UserProfile($nomComplet, $email, $profession, '
+      '$experience an(s), $tjm €)';
 }

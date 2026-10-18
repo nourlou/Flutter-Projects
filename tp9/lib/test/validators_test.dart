@@ -1,92 +1,169 @@
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tp9/utils/validators.dart';
 
 void main() {
-  group('Validation du nom', () {
-    test('Un nom valide est accepté', () {
-      expect(Validators.nom('Ben Ali'), isNull);
-    });
-
-    test('Un nom trop court est refusé', () {
+  group('Validation du nom et du prénom', () {
+    test('refuse un nom vide', () {
       expect(
-        Validators.nom('A'),
-        'Le nom doit contenir au moins 2 caractères',
-      );
-    });
-
-    test('Un nom vide est refusé', () {
-      expect(
-        Validators.nom('  '),
+        Validators.nom(' ', champ: 'Le nom'),
         'Le nom est obligatoire',
       );
     });
 
-    test('Les chiffres sont refusés', () {
+    test('refuse un nom trop court', () {
       expect(
-        Validators.nom('Ben3'),
+        Validators.nom('A', champ: 'Le nom'),
+        'Le nom doit contenir au moins 2 caractères',
+      );
+    });
+
+    test('accepte les accents', () {
+      expect(
+        Validators.nom('Élodie', champ: 'Le prénom'),
+        isNull,
+      );
+    });
+
+    test('refuse les chiffres dans le nom', () {
+      expect(
+        Validators.nom('Ben 3li', champ: 'Le nom'),
         'Le nom ne doit contenir que des lettres',
       );
     });
   });
 
   group('Validation de l’e-mail', () {
-    test('Un e-mail valide est accepté', () {
-      expect(Validators.email('ali@gmail.com'), isNull);
+    test('accepte une adresse correcte', () {
+      expect(
+        Validators.email('ali@example.com'),
+        isNull,
+      );
     });
 
-    test('Un e-mail invalide est refusé', () {
-      expect(Validators.email('ali@gmail'), isNotNull);
+    test('refuse une adresse incorrecte', () {
+      expect(
+        Validators.email('ali@gmail'),
+        'Format attendu : nom@domaine.com',
+      );
     });
   });
 
   group('Validation du mot de passe', () {
-    test('Un mot de passe valide est accepté', () {
-      expect(Validators.password('Bonjour123'), isNull);
-    });
-
-    test('Une majuscule est obligatoire', () {
+    test('exige une majuscule', () {
       expect(
-        Validators.password('bonjour12'),
+        Validators.motDePasse('bonjour12'),
         'Au moins une lettre majuscule',
       );
     });
 
-    test('Huit caractères minimum', () {
+    test('exige un chiffre', () {
       expect(
-        Validators.password('Ab1'),
-        'Au moins 8 caractères',
+        Validators.motDePasse('Bonjourxx'),
+        'Au moins un chiffre',
+      );
+    });
+
+    test('accepte un mot de passe valide', () {
+      expect(
+        Validators.motDePasse('Bonjour12'),
+        isNull,
       );
     });
   });
 
-  group('Validation professionnelle', () {
-    test('Une expérience comprise entre 0 et 50 est valide', () {
-      expect(Validators.experience('5'), isNull);
-      expect(Validators.experience('0'), isNull);
+  group('Confirmation du mot de passe', () {
+    test('refuse deux mots de passe différents', () {
+      expect(
+        Validators.confirmation('Autre1234', 'Bonjour12'),
+        'Les mots de passe ne correspondent pas',
+      );
     });
 
-    test('Une expérience de 75 ans est refusée', () {
+    test('accepte deux mots de passe identiques', () {
+      expect(
+        Validators.confirmation('Bonjour12', 'Bonjour12'),
+        isNull,
+      );
+    });
+  });
+
+  group('Validation de la profession', () {
+    test('refuse une profession vide', () {
+      expect(
+        Validators.profession(''),
+        'La profession est obligatoire',
+      );
+    });
+
+    test('accepte une profession valide', () {
+      expect(
+        Validators.profession('Développeur'),
+        isNull,
+      );
+    });
+  });
+
+  group('Validation de l’expérience', () {
+    test('refuse une expérience supérieure à 50', () {
       expect(
         Validators.experience('75'),
         'Valeur comprise entre 0 et 50',
       );
     });
 
-    test('Un TJM avec virgule est accepté', () {
-      expect(Validators.tjm('350,50'), isNull);
+    test('accepte zéro année d’expérience', () {
+      expect(
+        Validators.experience('0'),
+        isNull,
+      );
+    });
+  });
+
+  group('Validation du TJM', () {
+    test('refuse un montant inférieur à 50', () {
+      expect(
+        Validators.tjm('25'),
+        'Le TJM doit être compris entre 50 € et 3000 €',
+      );
     });
 
-    test('Un TJM trop faible est refusé', () {
-      expect(Validators.tjm('25'), isNotNull);
+    test('accepte la virgule décimale', () {
+      expect(
+        Validators.tjm('350,50'),
+        isNull,
+      );
     });
 
-    test('Une biographie vide est acceptée', () {
-      expect(Validators.biographie(''), isNull);
+    test('refuse un montant invalide', () {
+      expect(
+        Validators.tjm('abc'),
+        'Montant invalide',
+      );
+    });
+  });
+
+  group('Validation de la biographie', () {
+    test('accepte une biographie vide', () {
+      expect(
+        Validators.biographie(''),
+        isNull,
+      );
     });
 
-    test('Une biographie trop courte est refusée', () {
-      expect(Validators.biographie('Je code.'), isNotNull);
+    test('refuse une biographie trop courte', () {
+      expect(
+        Validators.biographie('Je code.'),
+        contains('Au moins 20 caractères'),
+      );
+    });
+
+    test('accepte une biographie suffisamment longue', () {
+      expect(
+        Validators.biographie(
+          'Je suis développeur Flutter.',
+        ),
+        isNull,
+      );
     });
   });
 }
